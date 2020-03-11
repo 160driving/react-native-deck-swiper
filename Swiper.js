@@ -761,8 +761,9 @@ class Swiper extends Component {
     const swipableCardStyle = this.calculateSwipableCardStyle()
     const renderOverlayLabel = this.renderOverlayLabel()
 
-    const dynamicStyle = overlayTypeOnSwipeCard ? this.props.overlayLabels[overlayTypeOnSwipeCard].style : null
-    const dynamicWrapperStyle = dynamicStyle ? dynamicStyle.wrapper : {}
+    const overlayExist = !!overlayLabels && !!overlayTypeOnSwipeCard && !!overlayLabels[overlayTypeOnSwipeCard];
+    const dynamicStyle = overlayExist ? overlayLabels[overlayTypeOnSwipeCard].style : null
+    const dynamicWrapperStyle = dynamicStyle ? dynamicStyle.wrapper : {}    
     
     renderedCards.push(
       <Animated.View
@@ -774,7 +775,7 @@ class Swiper extends Component {
         
         {stackCard}
 
-        {firstCard && overlayTypeOnSwipeCard ? 
+        {overlayExist && firstCard ? 
           <View style={[this.props.overlayLabelWrapperStyle, dynamicWrapperStyle]}>
             {overlayLabels[overlayTypeOnSwipeCard].element}
           </View> 
