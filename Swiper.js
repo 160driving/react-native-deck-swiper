@@ -50,6 +50,7 @@ class Swiper extends Component {
       slideGesture: false,
       swipeBackXYPositions: [],
       isSwipingBack: false,
+      overlayTypeOnSwipeCard: null,
       ...rebuildStackAnimatedValues(props)
     }
 
@@ -75,7 +76,8 @@ class Swiper extends Component {
       nextState.secondCardIndex !== state.secondCardIndex ||
       nextState.previousCardIndex !== state.previousCardIndex ||
       nextState.labelType !== state.labelType ||
-      nextState.swipedAllCards !== state.swipedAllCards
+      nextState.swipedAllCards !== state.swipedAllCards || 
+      nextState.overlayTypeOnSwipeCard !== state.overlayTypeOnSwipeCard
     )
     return propsChanged || stateChanged
   }
@@ -367,21 +369,31 @@ class Swiper extends Component {
   }
 
   swipeLeft = (mustDecrementCardIndex = false) => {
-    this.swipeCard(
-      this.props.onSwipedLeft,
-      -this.props.horizontalThreshold,
-      0,
-      mustDecrementCardIndex
-    )
+    this.setState({ overlayTypeOnSwipeCard: 'left'}, () => {
+      this.swipeCard(
+        this.props.onSwipedLeft,
+        -this.props.horizontalThreshold,
+        0,
+        mustDecrementCardIndex
+      )
+      setTimeout(() => {
+        this.setState({ overlayTypeOnSwipeCard: null })
+      }, this.props.swipeAnimationDuration - 150)
+    })
   }
 
   swipeRight = (mustDecrementCardIndex = false) => {
-    this.swipeCard(
-      this.props.onSwipedRight,
-      this.props.horizontalThreshold,
-      0,
-      mustDecrementCardIndex
-    )
+    this.setState({ overlayTypeOnSwipeCard: 'right'}, () => {
+      this.swipeCard(
+        this.props.onSwipedRight,
+        this.props.horizontalThreshold,
+        0,
+        mustDecrementCardIndex
+      )
+      setTimeout(() => {
+        this.setState({ overlayTypeOnSwipeCard: null })
+      }, this.props.swipeAnimationDuration - 150)
+    })
   }
 
   swipeTop = (mustDecrementCardIndex = false) => {
@@ -742,11 +754,16 @@ class Swiper extends Component {
   }
 
   pushCardToStack = (renderedCards, index, position, key, firstCard) => {
-    const { cards } = this.props
+    const { overlayTypeOnSwipeCard } = this.state;
+    const { cards, overlayLabels } = this.props
     const stackCardZoomStyle = this.calculateStackCardZoomStyle(position)
     const stackCard = this.props.renderCard(cards[index], index)
     const swipableCardStyle = this.calculateSwipableCardStyle()
     const renderOverlayLabel = this.renderOverlayLabel()
+
+    const dynamicStyle = overlayTypeOnSwipeCard ? this.props.overlayLabels[overlayTypeOnSwipeCard].style : null
+    const dynamicWrapperStyle = dynamicStyle ? dynamicStyle.wrapper : {}
+    
     renderedCards.push(
       <Animated.View
         key={key}
@@ -754,7 +771,18 @@ class Swiper extends Component {
         {...this._panResponder.panHandlers}
       >
         {firstCard ? renderOverlayLabel : null}
+        
         {stackCard}
+
+        {firstCard && overlayTypeOnSwipeCard ? 
+          <View style={[this.props.overlayLabelWrapperStyle, dynamicWrapperStyle]}>
+            {overlayLabels[overlayTypeOnSwipeCard].element}
+          </View> 
+          : 
+          null
+        }
+
+
       </Animated.View>
     )
   }
